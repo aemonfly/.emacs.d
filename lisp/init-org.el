@@ -9,6 +9,38 @@
 (require 'ox-latex)
 (require 'ox-ascii)
 
+;;; add the function to generate the file path
+;;; for example
+;;;; (aemon-to-file-name '("a" "b" "c")) will return a/b/c/
+(defun  aemon-to-file-name (dirlist &optional filename )
+  "concatenate the dirs into a path with an optional filename as last part"
+  (concat
+   (mapconcat 'file-name-as-directory  dirlist "")
+   filename))
+
+;;; define the tools root directory
+(defconst aemon-tools-dir (aemon-to-file-name (list user-emacs-directory "tools")))
+
+;;; define the jars directory
+(defconst aemon-tools-java-jars-dir (aemon-to-file-name (list aemon-tools-dir "java" "jars")))
+
+;;; define the jar file constant
+(defconst ditaa-file-name "ditaa0_9.jar")
+(defconst plantuml-file-name "plantuml.jar")
+
+;;; define the jar file fullpath
+(defconst ditaa-file-full-path (aemon-to-file-name (list aemon-tools-java-jars-dir) ditaa-file-name))
+(defconst plantuml-file-full-path (aemon-to-file-name (list aemon-tools-java-jars-dir) plantuml-file-name))
+
+;;; set the ditaa and plantuml path
+(setq org-ditaa-jar-path ditaa-file-full-path)
+(setq org-plantuml-jar-path plantuml-file-full-path)
+
+;;; define the org workspace related dirs
+(defconst org-ws-dir (expand-file-name "~/datas/orgws/"))
+(defconst org-ws-dir-org (expand-file-name "org/" org-ws-dir))
+
+
 ;;; add .org .txt .org_archive to the auto-mode-alist
 ;;; to enable org mode automatically for those files
 (add-to-list 'auto-mode-alist '("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode))
@@ -54,33 +86,37 @@
 
 ;; Capture templates for: TODO tasks, Notes, appointments, phone calls, meetings, and org-protocol
 (setq org-capture-templates
-      (quote (("t" "todo" entry (file "~/datas/orgws/org/refile.org")
+      (quote (("t" "todo" entry (file (expand-file-name "refile.org" org-ws-dir-org))
                "* TODO %?\n%U\n%a\n" :clock-in t :clock-resume t)
-              ("r" "respond" entry (file "~/datas/orgws/org/refile.org")
+              ("r" "respond" entry (file (expand-file-name "refile.org" org-ws-dir-org))
                "* NEXT Respond to %:from on %:subject\nSCHEDULED: %t\n%U\n%a\n" :clock-in t :clock-resume t :immediate-finish t)
-              ("n" "note" entry (file "~/datas/orgws/org/refile.org")
+              ("n" "note" entry (file (expand-file-name "refile.org" org-ws-dir-org))
                "* %? :NOTE:\n%U\n%a\n" :clock-in t :clock-resume t)
-              ("j" "Journal" entry (file+datetree "~/datas/orgws/org/diary.org")
+              ("j" "Journal" entry (file+datetree (expand-file-name "diary.org" org-ws-dir-org))
                "* %?\n%U\n" :clock-in t :clock-resume t)
-              ("w" "org-protocol" entry (file "~/datas/orgws/org/refile.org")
+              ("w" "org-protocol" entry (file (expand-file-name "refile.org" org-ws-dir-org))
                "* TODO Review %c\n%U\n" :immediate-finish t)
-              ("m" "Meeting" entry (file "~/datas/orgws/org/refile.org")
+              ("m" "Meeting" entry (file (expand-file-name "refile.org" org-ws-dir-org))
                "* MEETING with %? :MEETING:\n%U" :clock-in t :clock-resume t)
-              ("p" "Phone call" entry (file "~/datas/orgws/org/refile.org")
+              ("p" "Phone call" entry (file (expand-file-name "refile.org" org-ws-dir-org))
                "* PHONE %? :PHONE:\n%U" :clock-in t :clock-resume t)
-              ("h" "Habit" entry (file "~/datas/orgws/org/refile.org")
+              ("h" "Habit" entry (file (expand-file-name "refile.org" org-ws-dir-org))
                "* NEXT %?\n%U\n%a\nSCHEDULED: %(format-time-string \"<%Y-%m-%d %a .+1d/3d>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n"))))
 ;(setq org-log-done 'time)
 
-;; setup the org-refile-targets-dir
-(setq org-refile-targets-dir (quote ("~/datas/orgws/org/"
-                               "~/datas/orgws/org/client1/"
-                               "~/datas/orgws/client2/")))
 
-;; setup the org-agenda-files 
-(setq org-agenda-files (quote ("~/datas/orgws/org/"
-                               "~/datas/orgws/org/client1/"
-                               "~/datas/orgws/client2/")))
+;; setup the org-refile-targets-dir
+(setq org-refile-targets-dir (list org-ws-dir-org
+				   (expand-file-name "clinet1/" org-ws-dir-org)
+				   (expand-file-name "client2/" org-ws-dir)))
+
+
+;; setup the org-agenda-files
+(setq org-agenda-files (list org-ws-dir-org
+				   (expand-file-name "clinet1/" org-ws-dir-org)
+				   (expand-file-name "client2/" org-ws-dir)))
+
+
 ;; setup the org-refile-targets
 (setq org-refile-targets (quote ( 
 			         (org-agenda-files :maxlevel . 9)
@@ -521,8 +557,6 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
 (setq org-alphabetical-lists t)
 
 
-(setq org-ditaa-jar-path "~/java/ditaa0_9.jar")
-(setq org-plantuml-jar-path "~/java/plantuml.jar")
 
 (add-hook 'org-babel-after-execute-hook 'bh/display-inline-images 'append)
 
